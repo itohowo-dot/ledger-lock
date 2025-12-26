@@ -246,3 +246,44 @@
     (ok (var-get counter))
   )
 )
+
+(define-public (set-lock-count (new-value uint))
+  (begin
+    (asserts! (is-contract-owner) ERR-NOT-AUTHORIZED)
+    (asserts! (<= new-value MAX-COUNTER-VALUE) ERR-INVALID-VALUE)
+    
+    (let ((old-value (var-get counter)))
+      (var-set counter new-value)
+      
+      (print {
+        event: "lock-count-set",
+        old-value: old-value,
+        new-value: new-value,
+        user: tx-sender,
+        block: stacks-block-height
+      })
+      
+      (ok (var-get counter))
+    )
+  )
+)
+
+(define-public (transfer-ownership (new-owner principal))
+  (begin
+    (asserts! (is-contract-owner) ERR-NOT-AUTHORIZED)
+    (asserts! (not (is-eq new-owner (var-get owner))) ERR-SAME-OWNER)
+    
+    (let ((old-owner (var-get owner)))
+      (var-set owner new-owner)
+      
+      (print {
+        event: "ownership-transferred",
+        old-owner: old-owner,
+        new-owner: new-owner,
+        block: stacks-block-height
+      })
+      
+      (ok new-owner)
+    )
+  )
+)
