@@ -106,3 +106,50 @@
 (define-read-only (get-total-unlocks)
   (ok (var-get total-decrements))
 )
+
+(define-read-only (get-user-operations (user principal))
+  (ok (default-to 
+    { increments: u0, decrements: u0, last-action-block: u0 }
+    (map-get? user-operations user)
+  ))
+)
+
+(define-read-only (get-contract-info)
+  (ok {
+    lock-count: (var-get counter),
+    owner: (var-get owner),
+    is-locked: (var-get paused),
+    total-locks: (var-get total-increments),
+    total-unlocks: (var-get total-decrements),
+    contract-owner: CONTRACT-OWNER
+  })
+)
+
+;; =================================
+;; Public Functions
+;; =================================
+
+(define-public (lock)
+  (begin
+    ;; Validations
+    (asserts! (not (is-paused)) ERR-NOT-AUTHORIZED)
+    (asserts! (< (var-get counter) MAX-COUNTER-VALUE) ERR-COUNTER-OVERFLOW)
+    
+    ;; Update counter
+    (var-set counter (+ (var-get counter) u1))
+    (var-set total-increments (+ (var-get total-increments) u1))
+    
+    ;; Update user stats
+    (update-user-stats "increment")
+    
+    ;; Emit event
+    (print {
+      event: "entry-locked",
+      lock-count: (var-get counter),
+      user: tx-sender,
+      block: stacks-block-height
+    })
+    
+    (ok (var-get counter))
+  )
+)
