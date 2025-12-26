@@ -29,3 +29,43 @@
 (define-data-var paused bool false)
 (define-data-var total-increments uint u0)
 (define-data-var total-decrements uint u0)
+
+;; =================================
+;; Data Maps
+;; =================================
+
+;; Track operations per address for analytics
+(define-map user-operations 
+  principal 
+  {
+    increments: uint,
+    decrements: uint,
+    last-action-block: uint
+  }
+)
+
+;; =================================
+;; Private Functions
+;; =================================
+
+(define-private (is-contract-owner)
+  (is-eq tx-sender (var-get owner))
+)
+
+(define-private (is-paused)
+  (var-get paused)
+)
+
+(define-private (update-user-stats (operation (string-ascii 10)))
+  (let
+    (
+      (current-stats (default-to 
+        { increments: u0, decrements: u0, last-action-block: u0 }
+        (map-get? user-operations tx-sender)
+      ))
+    )
+    (if (is-eq operation "increment")
+      (map-set user-operations tx-sender {
+        increments: (+ (get increments current-stats) u1),
+        decrements: (get decrements current-stats),
+        last-action-block: stacks-block-height
