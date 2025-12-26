@@ -69,3 +69,40 @@
         increments: (+ (get increments current-stats) u1),
         decrements: (get decrements current-stats),
         last-action-block: stacks-block-height
+         })
+      (map-set user-operations tx-sender {
+        increments: (get increments current-stats),
+        decrements: (+ (get decrements current-stats) u1),
+        last-action-block: stacks-block-height
+      })
+    )
+  )
+)
+
+;; =================================
+;; Read-Only Functions
+;; =================================
+
+(define-read-only (get-lock-count)
+  (ok (var-get counter))
+)
+
+(define-read-only (get-owner)
+  (ok (var-get owner))
+)
+
+(define-read-only (get-contract-owner)
+  (ok CONTRACT-OWNER)
+)
+
+(define-read-only (is-locked-status)
+  (ok (var-get paused))
+)
+
+(define-read-only (get-total-locks)
+  (ok (var-get total-increments))
+)
+
+(define-read-only (get-total-unlocks)
+  (ok (var-get total-decrements))
+)
